@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
 
-    // Only allow POST
+    // Allow only POST
     if (req.method !== "POST") {
         return res.status(405).json({ error: "Method Not Allowed" });
     }
@@ -14,25 +14,24 @@ export default async function handler(req, res) {
             return res.status(500).json({ error: "Missing Gemini API Key" });
         }
 
-        // 🔥 Prompt (clean + strong)
+        // 🔥 Prompt
         const prompt = `
-You are an expert in space weather analysis.
+You are a space weather expert.
 
 A researcher is using a ${instrument}.
-
 Current research score: ${score}/100
-Recent solar activity: ${JSON.stringify(flares)}
+Recent solar flares: ${JSON.stringify(flares)}
 
-Explain in simple language:
-- What this score means
-- How space weather affects the instrument
-- Whether it's safe to proceed
-Keep it clear and professional.
+Explain:
+1. What the score means
+2. Impact on the instrument
+3. Recommendation
+Keep it simple and clear.
 `;
 
-        // 🔗 Gemini API call
+        // ✅ WORKING MODEL
         const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${API_KEY}`,
             {
                 method: "POST",
                 headers: {
@@ -50,7 +49,7 @@ Keep it clear and professional.
 
         const data = await response.json();
 
-        // ❌ Handle API errors properly
+        // ❌ Handle API failure
         if (!response.ok) {
             return res.status(500).json({
                 error: "Gemini API failed",
@@ -58,7 +57,7 @@ Keep it clear and professional.
             });
         }
 
-        // ⚠️ Safe extraction
+        // ✅ Safe extraction
         let text = "No explanation generated.";
 
         if (
@@ -71,7 +70,6 @@ Keep it clear and professional.
             text = data.candidates[0].content.parts[0].text;
         }
 
-        // ✅ Send result
         return res.status(200).json({
             explanation: text
         });
