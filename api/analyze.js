@@ -8,57 +8,76 @@ export default async function handler(req, res) {
     try {
         const { score, flares, instrument } = req.body;
 
-        const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+        const API_KEY = process.env.GEMINI_API_KEY;
 
-        if (!OPENAI_API_KEY) {
-            return res.status(500).json({ error: "Missing OpenAI API Key" });
+        if (!API_KEY) {
+            return res.status(500).json({ error: "Missing Gemini API Key" });
         }
 
+        // 🔥 Prompt (clean + strong)
         const prompt = `
-You are a space weather expert.
+You are an expert in space weather analysis.
 
-Score: ${score}
-Instrument: ${instrument}
-Flares: ${JSON.stringify(flares)}
+A researcher is using a ${instrument}.
 
-Explain clearly:
-1. Why the score is this
-2. How it affects the instrument
-3. What the researcher should do
+Current research score: ${score}/100
+Recent solar activity: ${JSON.stringify(flares)}
+
+Explain in simple language:
+- What this score means
+- How space weather affects the instrument
+- Whether it's safe to proceed
+Keep it clear and professional.
 `;
 
-        const response = await fetch("https://api.openai.com/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${OPENAI_API_KEY}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                model: "gpt-4o-mini",
-                messages: [
-                    { role: "system", content: "You are a helpful space weather assistant." },
-                    { role: "user", content: prompt }
-                ],
-                temperature: 0.7
-            })
-        });
+        // 🔗 Gemini API call
+        const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    contents: [
+                        {
+                            parts: [{ text: prompt }]
+                        }
+                    ]
+                })
+            }
+        );
 
         const data = await response.json();
 
-        // Handle API errors safely
-        if (!data.choices || !data.choices[0]) {
+        // ❌ Handle API errors properly
+        if (!response.ok) {
             return res.status(500).json({
-                error: "OpenAI API error",
+                error: "Gemini API failed",
                 details: data
             });
         }
 
-        res.status(200).json({
-            explanation: data.choices[0].message.content
+        // ⚠️ Safe extraction
+        let text = "No explanation generated.";
+
+        if (
+            data.candidates &&
+            data.candidates[0] &&
+            data.candidates[0].content &&
+            data.candidates[0].content.parts &&
+            data.candidates[0].content.parts[0]
+        ) {
+            text = data.candidates[0].content.parts[0].text;
+        }
+
+        // ✅ Send result
+        return res.status(200).json({
+            explanation: text
         });
 
     } catch (err) {
-        res.status(500).json({
+        return res.status(500).json({
             error: "Server error",
             message: err.message
         });
