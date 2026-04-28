@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AstroGuard</title>
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    color: white;
+    overflow-x: hidden;
+}
+
+/* 🌌 Stars */
+#stars {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: black;
+    z-index: -1;
+}
+
+/* 🌟 Container */
+.container {
+    max-width: 800px;
+    margin: auto;
+    padding: 20px;
+    animation: float 6s ease-in-out infinite;
+}
+
+/* 💎 Glass UI */
+.card {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(15px);
+    border-radius: 20px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+/* 🛰 Header */
+.header h1 { font-size: 40px; }
+
+/* 🎯 Score */
+.score {
+    font-size: 70px;
+    font-weight: bold;
+}
+.good { color:#10b981; }
+.moderate { color:#f59e0b; }
+.poor { color:#ef4444; }
+
+/* 📦 Events */
+.event {
+    background: rgba(255,255,255,0.1);
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 10px;
+}
+
+/* 🌀 Float */
+@keyframes float {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* 🔽 Dropdown */
+select {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="stars"></canvas>
+
+<div class="container">
+
+    <div class="card header">
+        <h1>🛰️ AstroGuard</h1>
+        <p>Space Weather Analyzer</p>
+
+        <select id="instrument" onchange="saveInstrument(); fetchData();">
+            <option value="radio">Radio Telescope</option>
+            <option value="satellite">Satellite</option>
+            <option value="gps">GPS</option>
+            <option value="comm">Communication</option>
+        </select>
+    </div>
+
+    <div id="content" class="card">
+        Loading data...
+    </div>
+
+</div>
+
+<script>
+const API_KEY = "US0yyc0uLO3wOPg5wLiCatsMHmVqisoOEdcAMxcx";
+
+/* 🚀 Fetch Data */
+async function fetchData() {
+    try {
+        const today = new Date();
+        const past = new Date(today - 7*24*60*60*1000);
+        const format = d => d.toISOString().split('T')[0];
+
+        const res = await fetch(
+        `https://api.nasa.gov/DONKI/FLR?startDate=${format(past)}&endDate=${format(today)}&api_key=${API_KEY}`
+        );
+
+        const flares = await res.json();
+
+        const score = calculateScore(flares);
+
+        display(score, flares);
+
+    } catch(e) {
+        document.getElementById("content").innerHTML = "Error loading data";
+    }
+}
+
+/* 🧠 Score Logic */
+function calculateScore(flares) {
+    let penalty = 0;
+    const instrument = document.getElementById("instrument").value;
+
+    flares.forEach(f => {
+        const type = f.classType ? f.classType[0] : "B";
+
+        if (instrument==="radio") {
+            if(type==="X") penalty+=50;
+            if(type==="M") penalty+=30;
+        }
+        if (instrument==="satellite") {
+            if(type==="X") penalty+=40;
+            if(type==="M") penalty+=25;
+        }
+        if (instrument==="gps") {
+            if(type==="X") penalty+=60;
+            if(type==="M") penalty+=35;
+        }
+        if (instrument==="comm") {
+            if(type==="X") penalty+=45;
+            if(type==="M") penalty+=20;
+        }
+    });
+
+    return Math.max(0,100-penalty);
+}
+
+/* 🧠 AI Explanation */
+function generateExplanation(score, flares) {
+
+    if (flares.length === 0) {
+        return "Space weather is calm. No impact expected.";
+    }
+
+    let x = flares.find(f => f.classType && f.classType.startsWith("X"));
+    let m = flares.find(f => f.classType && f.classType.startsWith("M"));
+
+    const instrument = document.getElementById("instrument").value;
+
+    if (x) {
+        return `⚠️ Strong X-class solar flare detected. High interference expected for ${instrument}.`;
+    }
+
+    if (m) {
+        return `⚡ Moderate M-class flare detected. Some disturbance possible for ${instrument}.`;
+    }
+
+    return `✅ Low activity. ${instrument} systems should operate normally.`;
+}
+
+/* 🎨 Display */
+function display(score, flares){
+
+    const status = score>=70 ? "good" : score>=45 ? "moderate":"poor";
+
+    const explanation = generateExplanation(score, flares);
+
+    let html = `
+    <h2>Score</h2>
+    <div class="score ${status}">${score}</div>
+    <p>${status.toUpperCase()} CONDITIONS</p>
+
+    <div style="margin-top:15px;font-size:14px;opacity:0.9;">
+        ${explanation}
+    </div>
+
+    <h3 style="margin-top:20px;">Recent Events</h3>
+    `;
+
+    flares.slice(0,5).forEach(f=>{
+        html+=`
+        <div class="event">
+        ${f.classType} flare<br>
+        ${new Date(f.beginTime).toLocaleString()}
+        </div>`;
+    });
+
+    document.getElementById("content").innerHTML = html;
+}
+
+/* 💾 Save User */
+function saveInstrument() {
+    localStorage.setItem("instrument", document.getElementById("instrument").value);
+}
+
+function loadInstrument() {
+    const saved = localStorage.getItem("instrument");
+    if (saved) {
+        document.getElementById("instrument").value = saved;
+    }
+}
+
+/* 🌌 Stars */
+const canvas = document.getElementById("stars");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let stars=[];
+
+for(let i=0;i<150;i++){
+    stars.push({
+        x:Math.random()*canvas.width,
+        y:Math.random()*canvas.height,
+        size:Math.random()*2,
+        speed:Math.random()*0.5
+    });
+}
+
+function animate(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle="white";
+
+    stars.forEach(s=>{
+        s.y+=s.speed;
+        if(s.y>canvas.height){
+            s.y=0;
+            s.x=Math.random()*canvas.width;
+        }
+        ctx.fillRect(s.x,s.y,s.size,s.size);
+    });
+
+    requestAnimationFrame(animate);
+}
+
+animate();
+
+/* 🚀 Start */
+loadInstrument();
+fetchData();
+</script>
+
+</body>
+</html>
