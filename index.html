@@ -1,266 +1,484 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AstroGuard</title>
-
-<style>
-* { margin:0; padding:0; box-sizing:border-box; }
-
-body {
-    font-family: 'Segoe UI', sans-serif;
-    color: white;
-    overflow-x: hidden;
-}
-
-/* 🌌 Stars */
-#stars {
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    background: black;
-    z-index: -1;
-}
-
-/* 🌟 Container */
-.container {
-    max-width: 800px;
-    margin: auto;
-    padding: 20px;
-    animation: float 6s ease-in-out infinite;
-}
-
-/* 💎 Glass UI */
-.card {
-    background: rgba(255,255,255,0.1);
-    backdrop-filter: blur(15px);
-    border-radius: 20px;
-    padding: 25px;
-    margin-bottom: 20px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-}
-
-/* 🛰 Header */
-.header h1 { font-size: 40px; }
-
-/* 🎯 Score */
-.score {
-    font-size: 70px;
-    font-weight: bold;
-}
-.good { color:#10b981; }
-.moderate { color:#f59e0b; }
-.poor { color:#ef4444; }
-
-/* 📦 Events */
-.event {
-    background: rgba(255,255,255,0.1);
-    padding: 10px;
-    margin: 10px 0;
-    border-radius: 10px;
-}
-
-/* 🌀 Float */
-@keyframes float {
-    0%,100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
-}
-
-/* 🔽 Dropdown */
-select {
-    margin-top: 10px;
-    padding: 10px;
-    border-radius: 10px;
-    border: none;
-    font-weight: bold;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AstroGuard - Space Weather Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0e27;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Animated starfield background */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+        
+        .container {
+            position: relative;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .logo {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        .header h1 {
+            font-size: 42px;
+            color: white;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .header p {
+            color: rgba(255,255,255,0.7);
+            font-size: 16px;
+        }
+        
+        .live-badge {
+            display: inline-block;
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid #10b981;
+            color: #10b981;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 15px;
+        }
+        
+        .live-badge::before {
+            content: "●";
+            margin-right: 6px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        .instrument-selector {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .instrument-selector label {
+            color: rgba(255,255,255,0.7);
+            font-size: 14px;
+            display: block;
+            margin-bottom: 10px;
+        }
+        
+        .instrument-selector select {
+            width: 100%;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+        }
+        
+        .score-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .score-label {
+            color: rgba(255,255,255,0.6);
+            font-size: 14px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .score {
+            font-size: 80px;
+            font-weight: 700;
+            margin: 20px 0;
+            text-shadow: 0 0 30px currentColor;
+        }
+        
+        .score.good { color: #10b981; }
+        .score.moderate { color: #f59e0b; }
+        .score.poor { color: #ef4444; }
+        
+        .status {
+            font-size: 18px;
+            color: rgba(255,255,255,0.8);
+            margin-top: 15px;
+        }
+        
+        .explanation {
+            background: rgba(255,255,255,0.05);
+            border-left: 3px solid #667eea;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+            color: rgba(255,255,255,0.9);
+            line-height: 1.7;
+        }
+        
+        .explanation h3 {
+            color: #667eea;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        
+        .events-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 30px;
+        }
+        
+        .events-card h2 {
+            color: white;
+            font-size: 22px;
+            margin-bottom: 20px;
+        }
+        
+        .event {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .event-title {
+            font-weight: 600;
+            color: white;
+            margin-bottom: 6px;
+            font-size: 15px;
+        }
+        
+        .event-time {
+            font-size: 13px;
+            color: rgba(255,255,255,0.6);
+        }
+        
+        .event-impact {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .impact-high {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+        
+        .impact-medium {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+        
+        .impact-low {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+        
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 18px;
+            padding: 60px 20px;
+        }
+        
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .footer {
+            text-align: center;
+            color: rgba(255,255,255,0.4);
+            font-size: 12px;
+            margin-top: 40px;
+            padding: 20px;
+        }
+    </style>
 </head>
-
 <body>
+    <!-- Animated stars -->
+    <div class="stars" id="stars"></div>
 
-<canvas id="stars"></canvas>
-
-<div class="container">
-
-    <div class="card header">
-        <h1>🛰️ AstroGuard</h1>
-        <p>Space Weather Analyzer</p>
-
-        <select id="instrument" onchange="saveInstrument(); fetchData();">
-            <option value="radio">Radio Telescope</option>
-            <option value="satellite">Satellite</option>
-            <option value="gps">GPS</option>
-            <option value="comm">Communication</option>
-        </select>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🛰️</div>
+            <h1>AstroGuard</h1>
+            <p>Space Weather Research Impact Analyzer</p>
+            <div class="live-badge">LIVE NASA DATA</div>
+        </div>
+        
+        <div class="instrument-selector">
+            <label for="instrument">Select your instrument type:</label>
+            <select id="instrument" onchange="refreshData()">
+                <option value="radio">Radio Telescope (HF Band)</option>
+                <option value="satellite">Satellite Sensor</option>
+                <option value="optical">Optical Telescope</option>
+                <option value="magnetometer">Magnetometer</option>
+            </select>
+        </div>
+        
+        <div id="content" class="loading">
+            Connecting to NASA space weather feeds...
+        </div>
+        
+        <div class="footer">
+            Data from NASA DONKI API • Built by Jeeva • AstroGuard v1.0
+        </div>
     </div>
 
-    <div id="content" class="card">
-        Loading data...
-    </div>
-
-</div>
-
-<script>
-const API_KEY = "US0yyc0uLO3wOPg5wLiCatsMHmVqisoOEdcAMxcx";
-
-/* 🚀 Fetch Data */
-async function fetchData() {
-    try {
-        const today = new Date();
-        const past = new Date(today - 7*24*60*60*1000);
-        const format = d => d.toISOString().split('T')[0];
-
-        const res = await fetch(
-        `https://api.nasa.gov/DONKI/FLR?startDate=${format(past)}&endDate=${format(today)}&api_key=${API_KEY}`
-        );
-
-        const flares = await res.json();
-
-        const score = calculateScore(flares);
-
-        display(score, flares);
-
-    } catch(e) {
-        document.getElementById("content").innerHTML = "Error loading data";
-    }
-}
-
-/* 🧠 Score Logic */
-function calculateScore(flares) {
-    let penalty = 0;
-    const instrument = document.getElementById("instrument").value;
-
-    flares.forEach(f => {
-        const type = f.classType ? f.classType[0] : "B";
-
-        if (instrument==="radio") {
-            if(type==="X") penalty+=50;
-            if(type==="M") penalty+=30;
+    <script>
+        // Create animated starfield
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.width = Math.random() * 3 + 'px';
+                star.style.height = star.style.width;
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                starsContainer.appendChild(star);
+            }
         }
-        if (instrument==="satellite") {
-            if(type==="X") penalty+=40;
-            if(type==="M") penalty+=25;
+        createStars();
+
+        const NASA_API_KEY = 'US0yyc0uLO3wOPg5wLiCatsMHmVqisoOEdcAMxcx';
+        
+        const INSTRUMENT_CONFIG = {
+            radio: {
+                name: 'Radio Telescope (HF Band)',
+                impacts: { X: 95, M: 70, C: 30, B: 5 }
+            },
+            satellite: {
+                name: 'Satellite Sensor',
+                impacts: { X: 80, M: 55, C: 20, B: 5 }
+            },
+            optical: {
+                name: 'Optical Telescope',
+                impacts: { X: 10, M: 5, C: 2, B: 0 }
+            },
+            magnetometer: {
+                name: 'Magnetometer',
+                impacts: { X: 60, M: 40, C: 15, B: 2 }
+            }
+        };
+        
+        async function fetchSpaceWeather() {
+            try {
+                const today = new Date();
+                const sevenDaysAgo = new Date(today - 7 * 24 * 60 * 60 * 1000);
+                
+                const formatDate = (date) => date.toISOString().split('T')[0];
+                const startDate = formatDate(sevenDaysAgo);
+                const endDate = formatDate(today);
+                
+                const flareResponse = await fetch(
+                    `https://api.nasa.gov/DONKI/FLR?startDate=${startDate}&endDate=${endDate}&api_key=${NASA_API_KEY}`
+                );
+                const flares = await flareResponse.json();
+                
+                const instrument = document.getElementById('instrument').value;
+                const score = calculateScore(flares, instrument);
+                
+                displayResults(score, flares, instrument);
+                
+            } catch (error) {
+                document.getElementById('content').innerHTML = `
+                    <div class="score-card">
+                        <p style="color: #ef4444;">Could not connect to NASA API. Check your connection.</p>
+                        <button class="button" onclick="fetchSpaceWeather()">Try Again</button>
+                    </div>
+                `;
+            }
         }
-        if (instrument==="gps") {
-            if(type==="X") penalty+=60;
-            if(type==="M") penalty+=35;
+        
+        function calculateScore(flares, instrumentType) {
+            const impacts = INSTRUMENT_CONFIG[instrumentType].impacts;
+            let penalty = 0;
+            
+            const recentFlares = flares.filter(f => {
+                const flareDate = new Date(f.beginTime);
+                const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+                return flareDate > twoDaysAgo;
+            });
+            
+            recentFlares.forEach(flare => {
+                const classType = flare.classType ? flare.classType[0] : 'B';
+                penalty += impacts[classType] || 0;
+            });
+            
+            return Math.max(0, Math.min(100, 100 - penalty));
         }
-        if (instrument==="comm") {
-            if(type==="X") penalty+=45;
-            if(type==="M") penalty+=20;
+        
+        function getExplanation(score, flares, instrumentType) {
+            const instrumentName = INSTRUMENT_CONFIG[instrumentType].name;
+            const recentCount = flares.filter(f => {
+                const flareDate = new Date(f.beginTime);
+                const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+                return flareDate > twoDaysAgo;
+            }).length;
+            
+            let explanation = '';
+            
+            if (score >= 70) {
+                explanation = `<h3>✅ Excellent conditions for ${instrumentName}</h3>`;
+                explanation += `<p>Space weather is calm with minimal solar activity. This is an optimal window for your observations. ${recentCount === 0 ? 'No significant solar flares detected in the past 48 hours.' : `Only ${recentCount} minor solar event(s) detected.`}</p>`;
+                explanation += `<p><strong>Recommendation:</strong> Proceed with your research schedule. Data quality should be excellent.</p>`;
+            } else if (score >= 45) {
+                explanation = `<h3>⚠️ Moderate space weather affecting ${instrumentName}</h3>`;
+                explanation += `<p>Some solar activity detected (${recentCount} event(s) in past 48 hours). Your ${instrumentName} may experience minor interference or data quality degradation.</p>`;
+                explanation += `<p><strong>Recommendation:</strong> You can proceed with observations but monitor data quality closely. Consider adjusting sensitivity settings if available.</p>`;
+            } else {
+                explanation += `<h3>🚨 Active space weather - high impact on ${instrumentName}</h3>`;
+                explanation += `<p>Significant solar activity detected (${recentCount} event(s) in past 48 hours). Your ${instrumentName} is likely experiencing substantial interference.</p>`;
+                explanation += `<p><strong>Recommendation:</strong> Consider postponing critical observations until space weather calms. If you must proceed, expect degraded data quality and potential instrument protection measures may be needed.</p>`;
+            }
+            
+            return explanation;
         }
-    });
-
-    return Math.max(0,100-penalty);
-}
-
-/* 🧠 AI Explanation */
-function generateExplanation(score, flares) {
-
-    if (flares.length === 0) {
-        return "Space weather is calm. No impact expected.";
-    }
-
-    let x = flares.find(f => f.classType && f.classType.startsWith("X"));
-    let m = flares.find(f => f.classType && f.classType.startsWith("M"));
-
-    const instrument = document.getElementById("instrument").value;
-
-    if (x) {
-        return `⚠️ Strong X-class solar flare detected. High interference expected for ${instrument}.`;
-    }
-
-    if (m) {
-        return `⚡ Moderate M-class flare detected. Some disturbance possible for ${instrument}.`;
-    }
-
-    return `✅ Low activity. ${instrument} systems should operate normally.`;
-}
-
-/* 🎨 Display */
-function display(score, flares){
-
-    const status = score>=70 ? "good" : score>=45 ? "moderate":"poor";
-
-    const explanation = generateExplanation(score, flares);
-
-    let html = `
-    <h2>Score</h2>
-    <div class="score ${status}">${score}</div>
-    <p>${status.toUpperCase()} CONDITIONS</p>
-
-    <div style="margin-top:15px;font-size:14px;opacity:0.9;">
-        ${explanation}
-    </div>
-
-    <h3 style="margin-top:20px;">Recent Events</h3>
-    `;
-
-    flares.slice(0,5).forEach(f=>{
-        html+=`
-        <div class="event">
-        ${f.classType} flare<br>
-        ${new Date(f.beginTime).toLocaleString()}
-        </div>`;
-    });
-
-    document.getElementById("content").innerHTML = html;
-}
-
-/* 💾 Save User */
-function saveInstrument() {
-    localStorage.setItem("instrument", document.getElementById("instrument").value);
-}
-
-function loadInstrument() {
-    const saved = localStorage.getItem("instrument");
-    if (saved) {
-        document.getElementById("instrument").value = saved;
-    }
-}
-
-/* 🌌 Stars */
-const canvas = document.getElementById("stars");
-const ctx = canvas.getContext("2d");
-
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-let stars=[];
-
-for(let i=0;i<150;i++){
-    stars.push({
-        x:Math.random()*canvas.width,
-        y:Math.random()*canvas.height,
-        size:Math.random()*2,
-        speed:Math.random()*0.5
-    });
-}
-
-function animate(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle="white";
-
-    stars.forEach(s=>{
-        s.y+=s.speed;
-        if(s.y>canvas.height){
-            s.y=0;
-            s.x=Math.random()*canvas.width;
+        
+        function getImpactLevel(classType, instrumentType) {
+            const impacts = INSTRUMENT_CONFIG[instrumentType].impacts;
+            const impact = impacts[classType] || 0;
+            
+            if (impact >= 50) return { level: 'HIGH', class: 'impact-high' };
+            if (impact >= 20) return { level: 'MEDIUM', class: 'impact-medium' };
+            return { level: 'LOW', class: 'impact-low' };
         }
-        ctx.fillRect(s.x,s.y,s.size,s.size);
-    });
-
-    requestAnimationFrame(animate);
-}
-
-animate();
-
-/* 🚀 Start */
-loadInstrument();
-fetchData();
-</script>
-
+        
+        function displayResults(score, flares, instrumentType) {
+            const scoreClass = score >= 70 ? 'good' : score >= 45 ? 'moderate' : 'poor';
+            const statusText = score >= 70 ? 'Excellent conditions' : 
+                              score >= 45 ? 'Moderate interference' : 
+                              'High interference';
+            
+            const recentFlares = flares.filter(f => {
+                const flareDate = new Date(f.beginTime);
+                const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+                return flareDate > twoDaysAgo;
+            }).slice(0, 5);
+            
+            const explanation = getExplanation(score, flares, instrumentType);
+            
+            let eventsHTML = '';
+            if (recentFlares.length === 0) {
+                eventsHTML = `
+                    <div class="event">
+                        <div class="event-title">🌟 No significant solar activity</div>
+                        <div class="event-time">Space weather is quiet in the past 48 hours</div>
+                        <span class="event-impact impact-low">IDEAL CONDITIONS</span>
+                    </div>
+                `;
+            } else {
+                recentFlares.forEach(flare => {
+                    const time = new Date(flare.beginTime).toLocaleString();
+                    const classType = flare.classType ? flare.classType[0] : 'B';
+                    const impact = getImpactLevel(classType, instrumentType);
+                    
+                    eventsHTML += `
+                        <div class="event">
+                            <div class="event-title">☀️ Solar Flare - Class ${flare.classType || 'Unknown'}</div>
+                            <div class="event-time">${time}</div>
+                            <span class="event-impact ${impact.class}">${impact.level} IMPACT</span>
+                        </div>
+                    `;
+                });
+            }
+            
+            document.getElementById('content').innerHTML = `
+                <div class="score-card">
+                    <div class="score-label">Research Window Score</div>
+                    <div class="score ${scoreClass}">${score}</div>
+                    <div class="status">${statusText}</div>
+                    <div class="explanation">${explanation}</div>
+                    <button class="button" onclick="fetchSpaceWeather()">🔄 Refresh Data</button>
+                </div>
+                
+                <div class="events-card">
+                    <h2>Recent Space Weather Events (Last 48 hours)</h2>
+                    ${eventsHTML}
+                    <p style="font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 20px;">
+                        Total flares in past 7 days: ${flares.length} • Instrument: ${INSTRUMENT_CONFIG[instrumentType].name}
+                    </p>
+                </div>
+            `;
+        }
+        
+        function refreshData() {
+            fetchSpaceWeather();
+        }
+        
+        // Load data on page load
+        fetchSpaceWeather();
+    </script>
 </body>
 </html>
