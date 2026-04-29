@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AstroGuard - Space Weather Monitor</title>
+    <title>AstroGuard - Space Weather Intelligence</title>
     <style>
         * {
             margin: 0;
@@ -13,24 +13,34 @@
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #0a0e27;
-            min-height: 100vh;
-            position: relative;
             overflow-x: hidden;
+            background: #000;
+            color: #fff;
         }
         
-        /* Animated starfield background */
-        .stars {
+        /* Animated Space Background */
+        #space-bg {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none;
+            background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+            z-index: 0;
+        }
+        
+        .stars {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
         }
         
         .star {
             position: absolute;
+            width: 2px;
+            height: 2px;
             background: white;
             border-radius: 50%;
             animation: twinkle 3s infinite;
@@ -41,296 +51,368 @@
             50% { opacity: 1; }
         }
         
-        .container {
-            position: relative;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 40px 20px;
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
         }
         
+        /* Floating Planets */
+        .planet {
+            position: fixed;
+            border-radius: 50%;
+            animation: float 8s infinite ease-in-out;
+            opacity: 0.6;
+            z-index: 1;
+        }
+        
+        .planet1 {
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle at 30% 30%, #ff6b6b, #c92a2a);
+            top: 10%;
+            right: 5%;
+            animation-delay: 0s;
+        }
+        
+        .planet2 {
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle at 30% 30%, #51cf66, #2b8a3e);
+            bottom: 15%;
+            left: 8%;
+            animation-delay: 2s;
+        }
+        
+        .planet3 {
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle at 30% 30%, #748ffc, #4c6ef5);
+            top: 50%;
+            right: 10%;
+            animation-delay: 4s;
+        }
+        
+        /* Glass Morphism Container */
+        .container {
+            position: relative;
+            z-index: 10;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+        
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Header */
         .header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 50px;
         }
         
         .logo {
-            font-size: 48px;
+            font-size: 64px;
             margin-bottom: 10px;
+            animation: float 6s infinite ease-in-out;
         }
         
-        .header h1 {
-            font-size: 42px;
-            color: white;
-            margin-bottom: 10px;
+        h1 {
+            font-size: 56px;
             font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            letter-spacing: -1px;
         }
         
-        .header p {
-            color: rgba(255,255,255,0.7);
-            font-size: 16px;
+        .subtitle {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 400;
         }
         
         .live-badge {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
             background: rgba(16, 185, 129, 0.2);
-            border: 1px solid #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.4);
             color: #10b981;
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 13px;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 14px;
             font-weight: 600;
-            margin-top: 15px;
+            margin-top: 20px;
         }
         
-        .live-badge::before {
-            content: "●";
-            margin-right: 6px;
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
             animation: pulse 2s infinite;
         }
         
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
         }
         
-        .instrument-selector {
-            background: rgba(255,255,255,0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .instrument-selector label {
-            color: rgba(255,255,255,0.7);
-            font-size: 14px;
-            display: block;
-            margin-bottom: 10px;
-        }
-        
-        .instrument-selector select {
-            width: 100%;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: white;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 15px;
-            cursor: pointer;
-        }
-        
-        .score-card {
-            background: rgba(255,255,255,0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 20px;
-            padding: 40px;
+        /* Score Display */
+        .score-display {
             text-align: center;
-            margin-bottom: 30px;
+            padding: 60px 40px;
         }
         
         .score-label {
-            color: rgba(255,255,255,0.6);
-            font-size: 14px;
-            margin-bottom: 15px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .score {
-            font-size: 80px;
-            font-weight: 700;
-            margin: 20px 0;
-            text-shadow: 0 0 30px currentColor;
-        }
-        
-        .score.good { color: #10b981; }
-        .score.moderate { color: #f59e0b; }
-        .score.poor { color: #ef4444; }
-        
-        .status {
-            font-size: 18px;
-            color: rgba(255,255,255,0.8);
-            margin-top: 15px;
-        }
-        
-        .explanation {
-            background: rgba(255,255,255,0.05);
-            border-left: 3px solid #667eea;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 20px 0;
-            text-align: left;
-            color: rgba(255,255,255,0.9);
-            line-height: 1.7;
-        }
-        
-        .explanation h3 {
-            color: #667eea;
             font-size: 16px;
-            margin-bottom: 10px;
-        }
-        
-        .events-card {
-            background: rgba(255,255,255,0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 20px;
-            padding: 30px;
-        }
-        
-        .events-card h2 {
-            color: white;
-            font-size: 22px;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 2px;
             margin-bottom: 20px;
         }
         
-        .event {
-            background: rgba(255,255,255,0.05);
-            border-radius: 12px;
-            padding: 16px;
+        .score-circle {
+            width: 220px;
+            height: 220px;
+            margin: 0 auto 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            position: relative;
+            animation: rotate-glow 10s infinite linear;
+        }
+        
+        @keyframes rotate-glow {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+        
+        .score-circle.good {
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, rgba(16, 185, 129, 0) 70%);
+            border: 3px solid #10b981;
+            box-shadow: 0 0 40px rgba(16, 185, 129, 0.5), inset 0 0 40px rgba(16, 185, 129, 0.2);
+        }
+        
+        .score-circle.moderate {
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.3) 0%, rgba(245, 158, 11, 0) 70%);
+            border: 3px solid #f59e0b;
+            box-shadow: 0 0 40px rgba(245, 158, 11, 0.5), inset 0 0 40px rgba(245, 158, 11, 0.2);
+        }
+        
+        .score-circle.poor {
+            background: radial-gradient(circle, rgba(239, 68, 68, 0.3) 0%, rgba(239, 68, 68, 0) 70%);
+            border: 3px solid #ef4444;
+            box-shadow: 0 0 40px rgba(239, 68, 68, 0.5), inset 0 0 40px rgba(239, 68, 68, 0.2);
+        }
+        
+        .score-value {
+            font-size: 80px;
+            font-weight: 700;
+            line-height: 1;
+        }
+        
+        .score-max {
+            font-size: 28px;
+            opacity: 0.5;
+        }
+        
+        .score-status {
+            font-size: 20px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+            margin-top: 10px;
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 40px;
+        }
+        
+        .stat-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+        }
+        
+        .stat-label {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 1px;
             margin-bottom: 12px;
-            border-left: 4px solid #667eea;
+        }
+        
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .stat-sub {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        /* Events Section */
+        .section-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .event {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-left: 4px solid;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .event:hover {
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateX(5px);
+        }
+        
+        .event.flare {
+            border-left-color: #f59e0b;
+        }
+        
+        .event.quiet {
+            border-left-color: #10b981;
         }
         
         .event-title {
+            font-size: 16px;
             font-weight: 600;
-            color: white;
-            margin-bottom: 6px;
-            font-size: 15px;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 8px;
         }
         
         .event-time {
-            font-size: 13px;
-            color: rgba(255,255,255,0.6);
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
         }
         
-        .event-impact {
-            display: inline-block;
-            margin-top: 8px;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 12px;
+        /* Button */
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 40px;
+            font-size: 16px;
             font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
         }
         
-        .impact-high {
-            background: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(102, 126, 234, 0.6);
         }
         
-        .impact-medium {
-            background: rgba(245, 158, 11, 0.2);
-            color: #f59e0b;
-        }
-        
-        .impact-low {
-            background: rgba(16, 185, 129, 0.2);
-            color: #10b981;
+        .btn:active {
+            transform: translateY(0);
         }
         
         .loading {
             text-align: center;
-            color: white;
+            padding: 60px;
             font-size: 18px;
-            padding: 60px 20px;
+            color: rgba(255, 255, 255, 0.7);
         }
         
-        .button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 14px 28px;
-            font-size: 15px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: 600;
-            margin-top: 20px;
-            transition: transform 0.2s;
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
         }
         
-        .button:hover {
-            transform: translateY(-2px);
-        }
-        
-        .footer {
-            text-align: center;
-            color: rgba(255,255,255,0.4);
-            font-size: 12px;
-            margin-top: 40px;
-            padding: 20px;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
-    <!-- Animated stars -->
-    <div class="stars" id="stars"></div>
-
+    <!-- Space Background -->
+    <div id="space-bg">
+        <div class="stars" id="stars"></div>
+    </div>
+    
+    <!-- Floating Planets -->
+    <div class="planet planet1"></div>
+    <div class="planet planet2"></div>
+    <div class="planet planet3"></div>
+    
+    <!-- Main Content -->
     <div class="container">
         <div class="header">
             <div class="logo">🛰️</div>
             <h1>AstroGuard</h1>
-            <p>Space Weather Research Impact Analyzer</p>
-            <div class="live-badge">LIVE NASA DATA</div>
+            <p class="subtitle">Space Weather Intelligence System</p>
+            <div class="live-badge">
+                <div class="live-dot"></div>
+                REAL-TIME NASA DATA
+            </div>
         </div>
         
-        <div class="instrument-selector">
-            <label for="instrument">Select your instrument type:</label>
-            <select id="instrument" onchange="refreshData()">
-                <option value="radio">Radio Telescope (HF Band)</option>
-                <option value="satellite">Satellite Sensor</option>
-                <option value="optical">Optical Telescope</option>
-                <option value="magnetometer">Magnetometer</option>
-            </select>
-        </div>
-        
-        <div id="content" class="loading">
-            Connecting to NASA space weather feeds...
-        </div>
-        
-        <div class="footer">
-            Data from NASA DONKI API • Built by Jeeva • AstroGuard v1.0
+        <div id="content" class="glass-card loading">
+            <div class="spinner"></div>
+            <div>Connecting to NASA satellites...</div>
         </div>
     </div>
 
     <script>
-        // Create animated starfield
+        // Create Starfield
         function createStars() {
             const starsContainer = document.getElementById('stars');
-            for (let i = 0; i < 100; i++) {
+            for (let i = 0; i < 200; i++) {
                 const star = document.createElement('div');
                 star.className = 'star';
-                star.style.width = Math.random() * 3 + 'px';
-                star.style.height = star.style.width;
                 star.style.left = Math.random() * 100 + '%';
                 star.style.top = Math.random() * 100 + '%';
                 star.style.animationDelay = Math.random() * 3 + 's';
                 starsContainer.appendChild(star);
             }
         }
-        createStars();
-
-        const NASA_API_KEY = 'US0yyc0uLO3wOPg5wLiCatsMHmVqisoOEdcAMxcx';
         
-        const INSTRUMENT_CONFIG = {
-            radio: {
-                name: 'Radio Telescope (HF Band)',
-                impacts: { X: 95, M: 70, C: 30, B: 5 }
-            },
-            satellite: {
-                name: 'Satellite Sensor',
-                impacts: { X: 80, M: 55, C: 20, B: 5 }
-            },
-            optical: {
-                name: 'Optical Telescope',
-                impacts: { X: 10, M: 5, C: 2, B: 0 }
-            },
-            magnetometer: {
-                name: 'Magnetometer',
-                impacts: { X: 60, M: 40, C: 15, B: 2 }
-            }
-        };
+        createStars();
+        
+        // NASA API Configuration
+        const NASA_API_KEY = 'DEMO_KEY'; // REPLACE WITH YOUR REAL KEY FROM api.nasa.gov
         
         async function fetchSpaceWeather() {
             try {
@@ -346,25 +428,25 @@
                 );
                 const flares = await flareResponse.json();
                 
-                const instrument = document.getElementById('instrument').value;
-                const score = calculateScore(flares, instrument);
-                
-                displayResults(score, flares, instrument);
+                const score = calculateScore(flares);
+                displayResults(score, flares);
                 
             } catch (error) {
                 document.getElementById('content').innerHTML = `
-                    <div class="score-card">
-                        <p style="color: #ef4444;">Could not connect to NASA API. Check your connection.</p>
-                        <button class="button" onclick="fetchSpaceWeather()">Try Again</button>
+                    <div class="loading">
+                        <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
+                        <div style="margin-bottom: 20px;">Could not connect to NASA</div>
+                        <div style="font-size: 14px; color: rgba(255,255,255,0.5); margin-bottom: 30px;">
+                            Make sure you replaced DEMO_KEY with your real NASA API key
+                        </div>
+                        <button class="btn" onclick="fetchSpaceWeather()">Retry Connection</button>
                     </div>
                 `;
             }
         }
         
-        function calculateScore(flares, instrumentType) {
-            const impacts = INSTRUMENT_CONFIG[instrumentType].impacts;
+        function calculateScore(flares) {
             let penalty = 0;
-            
             const recentFlares = flares.filter(f => {
                 const flareDate = new Date(f.beginTime);
                 const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
@@ -373,53 +455,19 @@
             
             recentFlares.forEach(flare => {
                 const classType = flare.classType ? flare.classType[0] : 'B';
-                penalty += impacts[classType] || 0;
+                if (classType === 'X') penalty += 40;
+                else if (classType === 'M') penalty += 25;
+                else if (classType === 'C') penalty += 10;
             });
             
             return Math.max(0, Math.min(100, 100 - penalty));
         }
         
-        function getExplanation(score, flares, instrumentType) {
-            const instrumentName = INSTRUMENT_CONFIG[instrumentType].name;
-            const recentCount = flares.filter(f => {
-                const flareDate = new Date(f.beginTime);
-                const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
-                return flareDate > twoDaysAgo;
-            }).length;
-            
-            let explanation = '';
-            
-            if (score >= 70) {
-                explanation = `<h3>✅ Excellent conditions for ${instrumentName}</h3>`;
-                explanation += `<p>Space weather is calm with minimal solar activity. This is an optimal window for your observations. ${recentCount === 0 ? 'No significant solar flares detected in the past 48 hours.' : `Only ${recentCount} minor solar event(s) detected.`}</p>`;
-                explanation += `<p><strong>Recommendation:</strong> Proceed with your research schedule. Data quality should be excellent.</p>`;
-            } else if (score >= 45) {
-                explanation = `<h3>⚠️ Moderate space weather affecting ${instrumentName}</h3>`;
-                explanation += `<p>Some solar activity detected (${recentCount} event(s) in past 48 hours). Your ${instrumentName} may experience minor interference or data quality degradation.</p>`;
-                explanation += `<p><strong>Recommendation:</strong> You can proceed with observations but monitor data quality closely. Consider adjusting sensitivity settings if available.</p>`;
-            } else {
-                explanation += `<h3>🚨 Active space weather - high impact on ${instrumentName}</h3>`;
-                explanation += `<p>Significant solar activity detected (${recentCount} event(s) in past 48 hours). Your ${instrumentName} is likely experiencing substantial interference.</p>`;
-                explanation += `<p><strong>Recommendation:</strong> Consider postponing critical observations until space weather calms. If you must proceed, expect degraded data quality and potential instrument protection measures may be needed.</p>`;
-            }
-            
-            return explanation;
-        }
-        
-        function getImpactLevel(classType, instrumentType) {
-            const impacts = INSTRUMENT_CONFIG[instrumentType].impacts;
-            const impact = impacts[classType] || 0;
-            
-            if (impact >= 50) return { level: 'HIGH', class: 'impact-high' };
-            if (impact >= 20) return { level: 'MEDIUM', class: 'impact-medium' };
-            return { level: 'LOW', class: 'impact-low' };
-        }
-        
-        function displayResults(score, flares, instrumentType) {
+        function displayResults(score, flares) {
             const scoreClass = score >= 70 ? 'good' : score >= 45 ? 'moderate' : 'poor';
             const statusText = score >= 70 ? 'Excellent conditions' : 
-                              score >= 45 ? 'Moderate interference' : 
-                              'High interference';
+                              score >= 45 ? 'Moderate activity' : 
+                              'High interference risk';
             
             const recentFlares = flares.filter(f => {
                 const flareDate = new Date(f.beginTime);
@@ -427,57 +475,64 @@
                 return flareDate > twoDaysAgo;
             }).slice(0, 5);
             
-            const explanation = getExplanation(score, flares, instrumentType);
-            
             let eventsHTML = '';
             if (recentFlares.length === 0) {
                 eventsHTML = `
-                    <div class="event">
-                        <div class="event-title">🌟 No significant solar activity</div>
-                        <div class="event-time">Space weather is quiet in the past 48 hours</div>
-                        <span class="event-impact impact-low">IDEAL CONDITIONS</span>
+                    <div class="event quiet">
+                        <div class="event-title">✨ Space weather is quiet</div>
+                        <div class="event-time">No significant solar activity detected in the past 48 hours</div>
                     </div>
                 `;
             } else {
                 recentFlares.forEach(flare => {
                     const time = new Date(flare.beginTime).toLocaleString();
-                    const classType = flare.classType ? flare.classType[0] : 'B';
-                    const impact = getImpactLevel(classType, instrumentType);
-                    
                     eventsHTML += `
-                        <div class="event">
-                            <div class="event-title">☀️ Solar Flare - Class ${flare.classType || 'Unknown'}</div>
+                        <div class="event flare">
+                            <div class="event-title">☀️ Solar Flare — Class ${flare.classType || 'Unknown'}</div>
                             <div class="event-time">${time}</div>
-                            <span class="event-impact ${impact.class}">${impact.level} IMPACT</span>
                         </div>
                     `;
                 });
             }
             
             document.getElementById('content').innerHTML = `
-                <div class="score-card">
+                <div class="score-display">
                     <div class="score-label">Research Window Score</div>
-                    <div class="score ${scoreClass}">${score}</div>
-                    <div class="status">${statusText}</div>
-                    <div class="explanation">${explanation}</div>
-                    <button class="button" onclick="fetchSpaceWeather()">🔄 Refresh Data</button>
+                    <div class="score-circle ${scoreClass}">
+                        <div class="score-value">${score}<span class="score-max">/100</span></div>
+                    </div>
+                    <div class="score-status">${statusText}</div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-label">Total Flares</div>
+                            <div class="stat-value">${flares.length}</div>
+                            <div class="stat-sub">Last 7 days</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Recent Events</div>
+                            <div class="stat-value">${recentFlares.length}</div>
+                            <div class="stat-sub">Last 48 hours</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Status</div>
+                            <div class="stat-value" style="font-size: 24px;">${score >= 70 ? '🟢' : score >= 45 ? '🟡' : '🔴'}</div>
+                            <div class="stat-sub">${scoreClass.toUpperCase()}</div>
+                        </div>
+                    </div>
                 </div>
-                
-                <div class="events-card">
-                    <h2>Recent Space Weather Events (Last 48 hours)</h2>
-                    ${eventsHTML}
-                    <p style="font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 20px;">
-                        Total flares in past 7 days: ${flares.length} • Instrument: ${INSTRUMENT_CONFIG[instrumentType].name}
-                    </p>
+            </div>
+            
+            <div class="glass-card">
+                <div class="section-title">Recent Space Weather Events</div>
+                ${eventsHTML}
+                <div style="text-align: center; margin-top: 30px;">
+                    <button class="btn" onclick="fetchSpaceWeather()">🔄 Refresh Data</button>
                 </div>
+            </div>
             `;
         }
         
-        function refreshData() {
-            fetchSpaceWeather();
-        }
-        
-        // Load data on page load
         fetchSpaceWeather();
     </script>
 </body>
