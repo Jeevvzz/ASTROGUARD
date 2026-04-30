@@ -7,14 +7,9 @@
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system;color:#fff;overflow-x:hidden}
 
-body{
-    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-    color:#fff;
-    overflow-x:hidden;
-}
-
-/* 🌌 REAL GALAXY BACKGROUND */
+/* 🌌 Background */
 body::before{
     content:"";
     position:fixed;
@@ -23,43 +18,32 @@ body::before{
     background:url('https://images-assets.nasa.gov/image/PIA01322/PIA01322~orig.jpg') center/cover no-repeat;
     z-index:-2;
 }
-
-/* Blur overlay */
 body::after{
     content:"";
     position:fixed;
     width:100%;
     height:100%;
     backdrop-filter:blur(25px);
-    background:rgba(0,0,0,0.4);
+    background:rgba(0,0,0,0.5);
     z-index:-1;
 }
 
-/* GLASS UI */
+/* Glass */
 .glass{
     background:rgba(255,255,255,0.08);
-    backdrop-filter:blur(25px);
+    backdrop-filter:blur(20px);
     border:1px solid rgba(255,255,255,0.15);
     border-radius:20px;
-    box-shadow:0 8px 40px rgba(0,0,0,0.4);
+    box-shadow:0 8px 30px rgba(0,0,0,0.4);
 }
 
-/* HEADER */
 .header{
     display:flex;
     justify-content:space-between;
-    padding:20px 30px;
     margin:20px;
+    padding:20px;
 }
 
-h1{
-    font-size:26px;
-    background:linear-gradient(90deg,#fff,#aaa);
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
-}
-
-/* GRID */
 .grid{
     display:grid;
     grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
@@ -67,48 +51,52 @@ h1{
     padding:20px;
 }
 
-.card{
-    padding:20px;
-    text-align:center;
-}
+.card{padding:20px;text-align:center}
+.big{font-size:30px;font-weight:bold}
 
-.big{
-    font-size:32px;
-    font-weight:700;
-}
-
-/* SCORE */
-.score{
-    text-align:center;
-    padding:30px;
-}
-
+.score{text-align:center;padding:30px}
 .circle{
-    width:180px;
-    height:180px;
-    border-radius:50%;
+    width:180px;height:180px;border-radius:50%;
     border:3px solid #fff;
+    display:flex;flex-direction:column;
+    justify-content:center;align-items:center;margin:auto;
+}
+
+/* ALERT */
+.alert{
+    margin:20px;
+    padding:15px;
+    border-radius:12px;
+    background:rgba(255,0,0,0.2);
+}
+
+/* MAP */
+.map{
+    height:200px;
+    margin:20px;
+    background:linear-gradient(to top, #001, #112);
     display:flex;
-    flex-direction:column;
     justify-content:center;
     align-items:center;
-    margin:auto;
+    border-radius:20px;
 }
-
-small{opacity:0.7}
 </style>
 </head>
 
 <body>
 
 <div class="header glass">
-    <h1>🛰️ AstroGuard</h1>
-    <div id="time">Loading...</div>
+    <h2>🛰️ AstroGuard</h2>
+    <div id="time">...</div>
 </div>
+
+<div id="alert"></div>
 
 <div class="grid" id="indicators"></div>
 
 <div class="glass score" id="main"></div>
+
+<div class="glass map" id="map"></div>
 
 <script>
 const NASA_API_KEY="US0yyc0uLO3wOPg5wLiCatsMHmVqisoOEdcAMxcx";
@@ -126,12 +114,11 @@ function getGScale(kp){
 /* SCORE */
 function calcScore(flares,kp,wind,cme){
     let score=100;
-
-    const weight={X:40,M:25,C:8,B:1};
+    const w={X:40,M:25,C:8,B:1};
 
     flares.forEach(f=>{
         const t=f.classType?f.classType[0]:'B';
-        score-=weight[t]||0;
+        score-=w[t]||0;
     });
 
     if(kp>=7) score-=30;
@@ -145,73 +132,101 @@ function calcScore(flares,kp,wind,cme){
     return Math.max(0,Math.round(score));
 }
 
+/* 🔮 Prediction */
+function predict(score,kp){
+    let future=score - (kp*2);
+    return Math.max(0,Math.min(100,Math.round(future)));
+}
+
+/* 🚨 Alerts */
+function getAlert(score,kp){
+    if(kp>=7) return "⚠️ Geomagnetic Storm Warning!";
+    if(score>80) return "✅ Perfect observation conditions";
+    if(score<40) return "⚡ High interference expected";
+    return "";
+}
+
+/* 🌍 Aurora Map (simple logic) */
+function getAuroraZone(kp){
+    if(kp>=7) return "Visible in mid-latitudes 🌍";
+    if(kp>=5) return "Visible near poles ❄️";
+    return "Not visible";
+}
+
+/* MAIN LOAD */
 async function load(){
 
-    /* NASA DATA */
-    const flareRes=await fetch(`https://api.nasa.gov/DONKI/FLR?api_key=${NASA_API_KEY}`);
-    const flares=await flareRes.json();
+    document.getElementById("indicators").innerHTML="Loading...";
+    document.getElementById("main").innerHTML="🚀 Loading space data...";
 
-    const cmeRes=await fetch(`https://api.nasa.gov/DONKI/CME?api_key=${NASA_API_KEY}`);
-    const cmes=await cmeRes.json();
+    try{
+        const [flareRes,cmeRes,kpRes,windRes]=await Promise.all([
+            fetch(`https://api.nasa.gov/DONKI/FLR?api_key=${NASA_API_KEY}`),
+            fetch(`https://api.nasa.gov/DONKI/CME?api_key=${NASA_API_KEY}`),
+            fetch("https://api.allorigins.win/raw?url=https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json"),
+            fetch("https://api.allorigins.win/raw?url=https://services.swpc.noaa.gov/products/solar-wind/plasma-7-day.json")
+        ]);
 
-    /* NOAA REAL DATA */
-    const kpRes=await fetch("https://api.allorigins.win/raw?url=https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json");
-    const kpData=await kpRes.json();
-    const kp=parseFloat(kpData[kpData.length-1][1]);
+        const flares=await flareRes.json();
+        const cmes=await cmeRes.json();
+        const kpData=await kpRes.json();
+        const windData=await windRes.json();
 
-    const windRes=await fetch("https://api.allorigins.win/raw?url=https://services.swpc.noaa.gov/products/solar-wind/plasma-7-day.json");
-    const windData=await windRes.json();
-    const solarWind=parseFloat(windData[windData.length-1][2]);
+        const kp=parseFloat(kpData[kpData.length-1][1]);
+        const solarWind=parseFloat(windData[windData.length-1][2]);
 
-    const recentFlares=flares.slice(-5);
-    const cmeCount=cmes.length;
+        const recentFlares=flares.slice(-5);
+        const cmeCount=cmes.length;
 
-    const score=calcScore(recentFlares,kp,solarWind,cmeCount);
-    const confidence=(recentFlares.length>0?80:95)-(kp*2);
+        const score=calcScore(recentFlares,kp,solarWind,cmeCount);
+        const future=predict(score,kp);
 
-    /* UI */
-    document.getElementById("indicators").innerHTML=`
-    <div class="glass card">
-        <div>Kp Index</div>
-        <div class="big">${kp}</div>
-        <small>${getGScale(kp)}</small>
-    </div>
-    <div class="glass card">
-        <div>Solar Wind</div>
-        <div class="big">${solarWind}</div>
-        <small>km/s</small>
-    </div>
-    <div class="glass card">
-        <div>Flares</div>
-        <div class="big">${recentFlares.length}</div>
-    </div>
-    <div class="glass card">
-        <div>CME</div>
-        <div class="big">${cmeCount}</div>
-    </div>
-    `;
+        /* ALERT */
+        document.getElementById("alert").innerHTML=
+            getAlert(score,kp)?`<div class="alert glass">${getAlert(score,kp)}</div>`:"";
 
-    document.getElementById("main").innerHTML=`
-    <div class="circle">
-        <div style="font-size:50px">${score}</div>
-        <small>/100</small>
-    </div>
+        /* INDICATORS */
+        document.getElementById("indicators").innerHTML=`
+        <div class="glass card"><div>Kp</div><div class="big">${kp}</div><small>${getGScale(kp)}</small></div>
+        <div class="glass card"><div>Wind</div><div class="big">${solarWind}</div><small>km/s</small></div>
+        <div class="glass card"><div>Flares</div><div class="big">${recentFlares.length}</div></div>
+        <div class="glass card"><div>CME</div><div class="big">${cmeCount}</div></div>
+        `;
 
-    <h3 style="margin-top:20px">
-    ${score>70?"Excellent":score>40?"Moderate":"Poor"} Conditions
-    </h3>
+        /* MAIN */
+        document.getElementById("main").innerHTML=`
+        <div class="circle">
+            <div style="font-size:45px">${score}</div>
+            <small>/100</small>
+        </div>
 
-    <div style="margin-top:15px;opacity:0.8">
-    Confidence: ${confidence}%
-    </div>
+        <h3 style="margin-top:15px">
+        ${score>70?"Excellent":score>40?"Moderate":"Poor"}
+        </h3>
 
-    <div style="margin-top:15px;font-size:12px;opacity:0.6">
-    📡 Data Sources: NASA DONKI + NOAA SWPC (Real-time)
-    </div>
-    `;
+        <div style="margin-top:10px">🔮 Next 24h: ${future}/100</div>
 
-    document.getElementById("time").innerText=
-        new Date().toLocaleTimeString();
+        <div style="font-size:12px;opacity:0.6;margin-top:10px">
+        📡 NASA + NOAA Real Data
+        </div>
+        `;
+
+        /* MAP */
+        document.getElementById("map").innerHTML=
+            `<div>${getAuroraZone(kp)}</div>`;
+
+        /* CACHE */
+        localStorage.setItem("astroCache",JSON.stringify({kp,solarWind,score}));
+
+    }catch(e){
+        const cache=JSON.parse(localStorage.getItem("astroCache"));
+        if(cache){
+            document.getElementById("main").innerHTML=
+                "⚡ Offline mode (cached data)";
+        }
+    }
+
+    document.getElementById("time").innerText=new Date().toLocaleTimeString();
 }
 
 load();
