@@ -1,751 +1,222 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AstroGuard - Scientific Space Weather Analysis System</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #000;
-            color: #fff;
-            overflow-x: hidden;
-        }
-        
-        /* Enhanced Space Background */
-        #space-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
-                radial-gradient(ellipse at top, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
-                radial-gradient(ellipse at bottom right, rgba(118, 75, 162, 0.15) 0%, transparent 50%),
-                radial-gradient(ellipse at bottom left, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
-                linear-gradient(180deg, #000428 0%, #004e92 100%);
-            z-index: 0;
-        }
-        
-        .stars-overlay {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            background-image: 
-                radial-gradient(2px 2px at 20% 30%, white, transparent),
-                radial-gradient(2px 2px at 60% 70%, white, transparent),
-                radial-gradient(1px 1px at 50% 50%, white, transparent),
-                radial-gradient(1px 1px at 80% 10%, white, transparent),
-                radial-gradient(2px 2px at 90% 60%, white, transparent);
-            background-size: 200% 200%;
-            animation: sparkle 120s linear infinite;
-            opacity: 0.6;
-            z-index: 1;
-        }
-        
-        @keyframes sparkle {
-            0%, 100% { background-position: 0% 0%; }
-            50% { background-position: 100% 100%; }
-        }
-        
-        .container {
-            position: relative;
-            z-index: 10;
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 30px 20px;
-        }
-        
-        /* Alert Banner */
-        .alert-banner {
-            background: rgba(239, 68, 68, 0.15);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(239, 68, 68, 0.4);
-            border-radius: 16px;
-            padding: 20px 24px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: flex-start;
-            gap: 16px;
-            animation: slideDown 0.5s ease;
-        }
-        
-        .alert-banner.warning { background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.4); }
-        .alert-banner.success { background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4); }
-        
-        @keyframes slideDown {
-            from { transform: translateY(-20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        
-        .alert-icon {
-            font-size: 28px;
-            animation: pulse 2s infinite;
-            flex-shrink: 0;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.7; transform: scale(1.1); }
-        }
-        
-        .alert-content { flex: 1; }
-        .alert-title { font-weight: 600; font-size: 16px; margin-bottom: 6px; }
-        .alert-text { font-size: 14px; opacity: 0.9; line-height: 1.5; }
-        
-        /* Header */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 20px 30px;
-        }
-        
-        .logo-section { display: flex; align-items: center; gap: 15px; }
-        .logo-icon { font-size: 40px; animation: float 6s infinite ease-in-out; }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-        }
-        
-        .logo-text h1 {
-            font-size: 28px;
-            font-weight: 700;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 2px;
-        }
-        
-        .logo-text p { font-size: 11px; color: rgba(255, 255, 255, 0.6); letter-spacing: 1.5px; }
-        
-        .header-controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-        
-        .live-indicator {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(16, 185, 129, 0.15);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            padding: 8px 16px;
-            border-radius: 30px;
-            font-size: 13px;
-            color: #10b981;
-            font-weight: 600;
-        }
-        
-        .live-dot {
-            width: 6px;
-            height: 6px;
-            background: #10b981;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-        
-        .update-time {
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.5);
-            padding: 8px 16px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 30px;
-        }
-        
-        /* Scientific Indicators */
-        .indicators-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-        
-        .indicator-card {
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 20px;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-        
-        .indicator-card:hover {
-            border-color: rgba(255, 255, 255, 0.2);
-            transform: translateY(-5px);
-        }
-        
-        .indicator-label {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.5);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-        }
-        
-        .indicator-value {
-            font-size: 36px;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-        
-        .indicator-status {
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.7);
-        }
-        
-        /* Instrument Selector */
-        .instrument-selector {
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 20px 30px;
-            margin-bottom: 30px;
-        }
-        
-        .selector-label {
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.6);
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .instruments {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        
-        .instrument-chip {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 10px 20px;
-            border-radius: 30px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: rgba(255, 255, 255, 0.7);
-        }
-        
-        .instrument-chip:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateY(-2px);
-        }
-        
-        .instrument-chip.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-color: transparent;
-            color: white;
-            font-weight: 600;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        }
-        
-        /* Glass Card */
-        .glass-card {
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 30px;
-            transition: all 0.3s ease;
-        }
-        
-        .glass-card:hover {
-            border-color: rgba(255, 255, 255, 0.2);
-            transform: translateY(-5px);
-        }
-        
-        .section-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            color: rgba(255, 255, 255, 0.9);
-        }
-        
-        /* Score Display */
-        .score-display {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .score-circle {
-            width: 200px;
-            height: 200px;
-            margin: 0 auto 20px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            border: 4px solid;
-            background: rgba(0, 0, 0, 0.5);
-        }
-        
-        .score-circle.good { 
-            border-color: #10b981; 
-            box-shadow: 0 0 40px rgba(16, 185, 129, 0.5);
-        }
-        .score-circle.moderate { 
-            border-color: #f59e0b; 
-            box-shadow: 0 0 40px rgba(245, 158, 11, 0.5);
-        }
-        .score-circle.poor { 
-            border-color: #ef4444; 
-            box-shadow: 0 0 40px rgba(239, 68, 68, 0.5);
-        }
-        
-        .score-value {
-            font-size: 64px;
-            font-weight: 700;
-            line-height: 1;
-        }
-        
-        .score-max { font-size: 22px; opacity: 0.4; }
-        .score-status { font-size: 16px; margin-top: 10px; }
-        
-        /* Scientific Explanation */
-        .explanation-box {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            padding: 20px;
-            margin-top: 20px;
-        }
-        
-        .explanation-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-        
-        .explanation-text {
-            font-size: 14px;
-            line-height: 1.6;
-            color: rgba(255, 255, 255, 0.8);
-        }
-        
-        /* Chart */
-        .chart-container {
-            position: relative;
-            height: 350px;
-        }
-        
-        @media (max-width: 768px) {
-            .indicators-grid { grid-template-columns: 1fr 1fr; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AstroGuard Pro</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    color:#fff;
+    overflow-x:hidden;
+}
+
+/* 🌌 REAL GALAXY BACKGROUND */
+body::before{
+    content:"";
+    position:fixed;
+    width:100%;
+    height:100%;
+    background:url('https://images-assets.nasa.gov/image/PIA01322/PIA01322~orig.jpg') center/cover no-repeat;
+    z-index:-2;
+}
+
+/* Blur overlay */
+body::after{
+    content:"";
+    position:fixed;
+    width:100%;
+    height:100%;
+    backdrop-filter:blur(25px);
+    background:rgba(0,0,0,0.4);
+    z-index:-1;
+}
+
+/* GLASS UI */
+.glass{
+    background:rgba(255,255,255,0.08);
+    backdrop-filter:blur(25px);
+    border:1px solid rgba(255,255,255,0.15);
+    border-radius:20px;
+    box-shadow:0 8px 40px rgba(0,0,0,0.4);
+}
+
+/* HEADER */
+.header{
+    display:flex;
+    justify-content:space-between;
+    padding:20px 30px;
+    margin:20px;
+}
+
+h1{
+    font-size:26px;
+    background:linear-gradient(90deg,#fff,#aaa);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+
+/* GRID */
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:15px;
+    padding:20px;
+}
+
+.card{
+    padding:20px;
+    text-align:center;
+}
+
+.big{
+    font-size:32px;
+    font-weight:700;
+}
+
+/* SCORE */
+.score{
+    text-align:center;
+    padding:30px;
+}
+
+.circle{
+    width:180px;
+    height:180px;
+    border-radius:50%;
+    border:3px solid #fff;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    margin:auto;
+}
+
+small{opacity:0.7}
+</style>
 </head>
+
 <body>
-    <div id="space-bg"></div>
-    <div class="stars-overlay"></div>
-    
-    <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <div class="logo-section">
-                <div class="logo-icon">🛰️</div>
-                <div class="logo-text">
-                    <h1>AstroGuard</h1>
-                    <p>SCIENTIFIC SPACE WEATHER ANALYSIS</p>
-                </div>
-            </div>
-            <div class="header-controls">
-                <div class="update-time" id="update-time">Initializing...</div>
-                <div class="live-indicator">
-                    <div class="live-dot"></div>
-                    MULTI-SOURCE DATA
-                </div>
-            </div>
-        </div>
-        
-        <!-- Alert Container -->
-        <div id="alert-container"></div>
-        
-        <!-- Scientific Indicators -->
-        <div class="indicators-grid" id="indicators"></div>
-        
-        <!-- Instrument Selector -->
-        <div class="instrument-selector">
-            <div class="selector-label">Select your instrument type</div>
-            <div class="instruments">
-                <div class="instrument-chip active" data-type="radio">📡 Radio Telescope</div>
-                <div class="instrument-chip" data-type="satellite">🛰️ Satellite</div>
-                <div class="instrument-chip" data-type="optical">🔭 Optical</div>
-                <div class="instrument-chip" data-type="gps">📍 GPS System</div>
-            </div>
-        </div>
-        
-        <!-- Main Content -->
-        <div id="content"></div>
+
+<div class="header glass">
+    <h1>🛰️ AstroGuard</h1>
+    <div id="time">Loading...</div>
+</div>
+
+<div class="grid" id="indicators"></div>
+
+<div class="glass score" id="main"></div>
+
+<script>
+const NASA_API_KEY="US0yyc0uLO3wOPg5wLiCatsMHmVqisoOEdcAMxcx";
+
+/* G SCALE */
+function getGScale(kp){
+    if(kp>=9) return "G5 Extreme";
+    if(kp>=8) return "G4 Severe";
+    if(kp>=7) return "G3 Strong";
+    if(kp>=6) return "G2 Moderate";
+    if(kp>=5) return "G1 Minor";
+    return "Quiet";
+}
+
+/* SCORE */
+function calcScore(flares,kp,wind,cme){
+    let score=100;
+
+    const weight={X:40,M:25,C:8,B:1};
+
+    flares.forEach(f=>{
+        const t=f.classType?f.classType[0]:'B';
+        score-=weight[t]||0;
+    });
+
+    if(kp>=7) score-=30;
+    else if(kp>=5) score-=20;
+
+    if(wind>700) score-=20;
+    else if(wind>500) score-=10;
+
+    score-=Math.min(cme,3)*25;
+
+    return Math.max(0,Math.round(score));
+}
+
+async function load(){
+
+    /* NASA DATA */
+    const flareRes=await fetch(`https://api.nasa.gov/DONKI/FLR?api_key=${NASA_API_KEY}`);
+    const flares=await flareRes.json();
+
+    const cmeRes=await fetch(`https://api.nasa.gov/DONKI/CME?api_key=${NASA_API_KEY}`);
+    const cmes=await cmeRes.json();
+
+    /* NOAA REAL DATA */
+    const kpRes=await fetch("https://api.allorigins.win/raw?url=https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json");
+    const kpData=await kpRes.json();
+    const kp=parseFloat(kpData[kpData.length-1][1]);
+
+    const windRes=await fetch("https://api.allorigins.win/raw?url=https://services.swpc.noaa.gov/products/solar-wind/plasma-7-day.json");
+    const windData=await windRes.json();
+    const solarWind=parseFloat(windData[windData.length-1][2]);
+
+    const recentFlares=flares.slice(-5);
+    const cmeCount=cmes.length;
+
+    const score=calcScore(recentFlares,kp,solarWind,cmeCount);
+    const confidence=(recentFlares.length>0?80:95)-(kp*2);
+
+    /* UI */
+    document.getElementById("indicators").innerHTML=`
+    <div class="glass card">
+        <div>Kp Index</div>
+        <div class="big">${kp}</div>
+        <small>${getGScale(kp)}</small>
+    </div>
+    <div class="glass card">
+        <div>Solar Wind</div>
+        <div class="big">${solarWind}</div>
+        <small>km/s</small>
+    </div>
+    <div class="glass card">
+        <div>Flares</div>
+        <div class="big">${recentFlares.length}</div>
+    </div>
+    <div class="glass card">
+        <div>CME</div>
+        <div class="big">${cmeCount}</div>
+    </div>
+    `;
+
+    document.getElementById("main").innerHTML=`
+    <div class="circle">
+        <div style="font-size:50px">${score}</div>
+        <small>/100</small>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script>
-        const NASA_API_KEY = 'US0yyc0uLO3wOPg5wLiCatsMHmVqisoOEdcAMxcx'; // ⚠️ REPLACE WITH YOUR REAL KEY
-        let currentInstrument = 'radio';
-        let chartInstance = null;
-        
-        // SCIENTIFIC IMPACT WEIGHTS
-        const IMPACT = {
-            radio: {
-                flare: { X: 35, M: 25, C: 12, B: 3 },
-                kp: { severe: 30, storm: 20, active: 10 },
-                wind: { extreme: 20, high: 12, elevated: 5 },
-                cme: 25,
-                name: 'Radio Telescope'
-            },
-            satellite: {
-                flare: { X: 30, M: 20, C: 10, B: 2 },
-                kp: { severe: 35, storm: 25, active: 12 },
-                wind: { extreme: 25, high: 15, elevated: 8 },
-                cme: 30,
-                name: 'Satellite Sensor'
-            },
-            optical: {
-                flare: { X: 8, M: 5, C: 2, B: 0 },
-                kp: { severe: 12, storm: 8, active: 4 },
-                wind: { extreme: 5, high: 3, elevated: 1 },
-                cme: 8,
-                name: 'Optical Telescope'
-            },
-            gps: {
-                flare: { X: 32, M: 22, C: 11, B: 3 },
-                kp: { severe: 40, storm: 28, active: 15 },
-                wind: { extreme: 28, high: 18, elevated: 10 },
-                cme: 32,
-                name: 'GPS System'
-            }
-        };
-        
-        // Update time
-        function updateTime() {
-            const now = new Date();
-            document.getElementById('update-time').textContent = 
-                `Updated: ${now.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}`;
-        }
-        
-        // Instrument selector
-        document.querySelectorAll('.instrument-chip').forEach(chip => {
-            chip.addEventListener('click', () => {
-                document.querySelectorAll('.instrument-chip').forEach(c => c.classList.remove('active'));
-                chip.classList.add('active');
-                currentInstrument = chip.dataset.type;
-                fetchAllData();
-            });
-        });
-        
-        // SCIENTIFIC SCORING MODEL
-        function calculateScientificScore(flares, kp, solarWind, cmeCount) {
-            let score = 100;
-            const inst = IMPACT[currentInstrument];
-            
-            // Solar Flares
-            flares.forEach(f => {
-                const cls = f.classType ? f.classType[0] : 'B';
-                score -= (inst.flare[cls] || 0);
-            });
-            
-            // Kp Index
-            if (kp >= 7) score -= inst.kp.severe;
-            else if (kp >= 5) score -= inst.kp.storm;
-            else if (kp >= 3) score -= inst.kp.active;
-            
-            // Solar Wind
-            if (solarWind > 700) score -= inst.wind.extreme;
-            else if (solarWind > 500) score -= inst.wind.high;
-            else if (solarWind > 400) score -= inst.wind.elevated;
-            
-            // CME
-            if (cmeCount > 0) score -= inst.cme * Math.min(cmeCount, 3);
-            
-            return Math.max(0, Math.min(100, Math.round(score)));
-        }
-        
-        // Generate scientific explanation
-        function generateExplanation(flares, kp, solarWind, cmeCount, score) {
-            let factors = [];
-            
-            if (kp >= 7) factors.push(`severe geomagnetic storm (Kp=${kp})`);
-            else if (kp >= 5) factors.push(`geomagnetic storm activity (Kp=${kp})`);
-            else if (kp >= 3) factors.push(`elevated geomagnetic activity (Kp=${kp})`);
-            
-            if (solarWind > 700) factors.push(`extreme solar wind speed (${solarWind} km/s)`);
-            else if (solarWind > 500) factors.push(`high solar wind speed (${solarWind} km/s)`);
-            
-            const majorFlares = flares.filter(f => f.classType && (f.classType[0] === 'X' || f.classType[0] === 'M'));
-            if (majorFlares.length > 0) {
-                factors.push(`${majorFlares.length} major solar flare${majorFlares.length > 1 ? 's' : ''}`);
-            }
-            
-            if (cmeCount > 0) factors.push(`${cmeCount} coronal mass ejection${cmeCount > 1 ? 's' : ''}`);
-            
-            if (factors.length === 0) {
-                return `Space weather conditions are quiet. Minimal ionospheric disturbances expected. Excellent conditions for ${IMPACT[currentInstrument].name} operations.`;
-            }
-            
-            const impact = score >= 70 ? 'minimal impact' : score >= 45 ? 'moderate interference' : 'significant disruptions';
-            return `Current conditions show ${factors.join(', ')}. These factors may cause ${impact} to ${IMPACT[currentInstrument].name} operations. ${score < 45 ? 'Consider postponing critical observations.' : ''}`;
-        }
-        
-        async function fetchAllData() {
-            try {
-                const today = new Date();
-                const sevenDaysAgo = new Date(today - 7 * 24 * 60 * 60 * 1000);
-                const formatDate = (date) => date.toISOString().split('T')[0];
-                
-                // Fetch NASA Flares
-                const flareRes = await fetch(
-                    `https://api.nasa.gov/DONKI/FLR?startDate=${formatDate(sevenDaysAgo)}&endDate=${formatDate(today)}&api_key=${NASA_API_KEY}`
-                );
-                const flares = await flareRes.json();
-                
-                // Fetch NASA CME
-                const cmeRes = await fetch(
-                    `https://api.nasa.gov/DONKI/CME?startDate=${formatDate(sevenDaysAgo)}&endDate=${formatDate(today)}&api_key=${NASA_API_KEY}`
-                );
-                const cmes = await cmeRes.json();
-                
-                // Simulated Kp and Solar Wind (NOAA requires different setup)
-                // In production, fetch from: https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json
-                const kp = Math.floor(Math.random() * 6); // Simulated 0-6
-                const solarWind = 350 + Math.floor(Math.random() * 300); // Simulated 350-650 km/s
-                
-                const recentFlares = flares.filter(f => {
-                    const flareDate = new Date(f.beginTime);
-                    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
-                    return flareDate > twoDaysAgo;
-                });
-                
-                const recentCME = cmes.filter(c => {
-                    const cmeDate = new Date(c.startTime);
-                    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
-                    return cmeDate > twoDaysAgo;
-                });
-                
-                displayResults(recentFlares, kp, solarWind, recentCME.length, flares);
-                updateTime();
-                
-            } catch (error) {
-                console.error('Data fetch error:', error);
-            }
-        }
-        
-        function displayResults(recentFlares, kp, solarWind, cmeCount, allFlares) {
-            const score = calculateScientificScore(recentFlares, kp, solarWind, cmeCount);
-            const explanation = generateExplanation(recentFlares, kp, solarWind, cmeCount, score);
-            
-            const scoreClass = score >= 70 ? 'good' : score >= 45 ? 'moderate' : 'poor';
-            const statusText = score >= 70 ? 'Excellent' : score >= 45 ? 'Moderate' : 'Poor';
-            
-            // Alert System
-            let alertHTML = '';
-            if (score >= 80) {
-                alertHTML = `
-                    <div class="alert-banner success">
-                        <div class="alert-icon">✅</div>
-                        <div class="alert-content">
-                            <div class="alert-title">Optimal Observation Window</div>
-                            <div class="alert-text">All space weather indicators show excellent conditions for ${IMPACT[currentInstrument].name} operations.</div>
-                        </div>
-                    </div>
-                `;
-            } else if (kp >= 7 || score < 30) {
-                alertHTML = `
-                    <div class="alert-banner">
-                        <div class="alert-icon">⚠️</div>
-                        <div class="alert-content">
-                            <div class="alert-title">Severe Space Weather Warning</div>
-                            <div class="alert-text">High interference risk detected. ${kp >= 7 ? 'Geomagnetic storm in progress.' : ''} Consider postponing critical observations.</div>
-                        </div>
-                    </div>
-                `;
-            } else if (score < 60) {
-                alertHTML = `
-                    <div class="alert-banner warning">
-                        <div class="alert-icon">⚡</div>
-                        <div class="alert-content">
-                            <div class="alert-title">Elevated Space Weather Activity</div>
-                            <div class="alert-text">Moderate interference possible. Monitor conditions closely.</div>
-                        </div>
-                    </div>
-                `;
-            }
-            document.getElementById('alert-container').innerHTML = alertHTML;
-            
-            // Indicators
-            const kpStatus = kp >= 7 ? 'Severe storm' : kp >= 5 ? 'Storm' : kp >= 3 ? 'Active' : 'Quiet';
-            const kpColor = kp >= 7 ? '#ef4444' : kp >= 5 ? '#f59e0b' : kp >= 3 ? '#f59e0b' : '#10b981';
-            
-            const windStatus = solarWind > 700 ? 'Extreme' : solarWind > 500 ? 'High' : solarWind > 400 ? 'Elevated' : 'Normal';
-            const windColor = solarWind > 700 ? '#ef4444' : solarWind > 500 ? '#f59e0b' : solarWind > 400 ? '#f59e0b' : '#10b981';
-            
-            document.getElementById('indicators').innerHTML = `
-                <div class="indicator-card">
-                    <div class="indicator-label">Kp Index</div>
-                    <div class="indicator-value" style="color: ${kpColor}">${kp}</div>
-                    <div class="indicator-status">${kpStatus}</div>
-                </div>
-                <div class="indicator-card">
-                    <div class="indicator-label">Solar Wind</div>
-                    <div class="indicator-value" style="color: ${windColor}">${solarWind}</div>
-                    <div class="indicator-status">${windStatus} km/s</div>
-                </div>
-                <div class="indicator-card">
-                    <div class="indicator-label">Solar Flares</div>
-                    <div class="indicator-value">${recentFlares.length}</div>
-                    <div class="indicator-status">Last 48 hours</div>
-                </div>
-                <div class="indicator-card">
-                    <div class="indicator-label">CME Events</div>
-                    <div class="indicator-value">${cmeCount}</div>
-                    <div class="indicator-status">Last 48 hours</div>
-                </div>
-            `;
-            
-            // Main Content
-            document.getElementById('content').innerHTML = `
-                <div class="glass-card">
-                    <div class="section-title">🎯 Research Window Analysis</div>
-                    <div class="score-display">
-                        <div class="score-circle ${scoreClass}">
-                            <div class="score-value">${score}<span class="score-max">/100</span></div>
-                        </div>
-                        <div class="score-status">${statusText} conditions for ${IMPACT[currentInstrument].name}</div>
-                    </div>
-                    
-                    <div class="explanation-box">
-                        <div class="explanation-title">📊 Scientific Analysis</div>
-                        <div class="explanation-text">${explanation}</div>
-                    </div>
-                </div>
-                
-                <div class="glass-card">
-                    <div class="section-title">📈 Multi-Parameter Trend Analysis</div>
-                    <div class="chart-container">
-                        <canvas id="multiChart"></canvas>
-                    </div>
-                </div>
-            `;
-            
-            // Create Multi-Line Chart
-            createChart(allFlares);
-        }
-        
-        function createChart(flares) {
-            if (chartInstance) chartInstance.destroy();
-            
-            const days = [];
-            const scores = [];
-            const kpValues = [];
-            const flareCount = [];
-            
-            for (let i = 6; i >= 0; i--) {
-                const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
-                const dateStr = date.toISOString().split('T')[0];
-                const dayFlares = flares.filter(f => f.beginTime && f.beginTime.startsWith(dateStr));
-                
-                const simKp = Math.floor(Math.random() * 6);
-                const simWind = 350 + Math.floor(Math.random() * 200);
-                const score = calculateScientificScore(dayFlares, simKp, simWind, 0);
-                
-                days.push(date.toLocaleDateString('en', {month: 'short', day: 'numeric'}));
-                scores.push(score);
-                kpValues.push(simKp * 10); // Scale for visibility
-                flareCount.push(dayFlares.length);
-            }
-            
-            const ctx = document.getElementById('multiChart').getContext('2d');
-            chartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: days,
-                    datasets: [{
-                        label: 'Research Score',
-                        data: scores,
-                        borderColor: '#667eea',
-                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4,
-                        yAxisID: 'y'
-                    }, {
-                        label: 'Kp Index (×10)',
-                        data: kpValues,
-                        borderColor: '#f59e0b',
-                        borderWidth: 2,
-                        fill: false,
-                        tension: 0.4,
-                        yAxisID: 'y'
-                    }, {
-                        label: 'Flare Count',
-                        data: flareCount,
-                        borderColor: '#10b981',
-                        borderWidth: 2,
-                        fill: false,
-                        tension: 0.4,
-                        yAxisID: 'y1'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: {
-                        legend: { 
-                            display: true,
-                            labels: { color: 'rgba(255, 255, 255, 0.8)' }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                            padding: 12,
-                            titleColor: '#fff',
-                            bodyColor: '#fff'
-                        }
-                    },
-                    scales: {
-                        y: {
-                            type: 'linear',
-                            display: true,
-                            position: 'left',
-                            max: 100,
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                            ticks: { color: 'rgba(255, 255, 255, 0.6)' }
-                        },
-                        y1: {
-                            type: 'linear',
-                            display: true,
-                            position: 'right',
-                            grid: { drawOnChartArea: false },
-                            ticks: { color: 'rgba(255, 255, 255, 0.6)' }
-                        },
-                        x: {
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                            ticks: { color: 'rgba(255, 255, 255, 0.6)' }
-                        }
-                    }
-                }
-            });
-        }
-        
-        // Auto-refresh every 60 seconds
-        fetchAllData();
-        setInterval(fetchAllData, 60000);
-    </script>
+    <h3 style="margin-top:20px">
+    ${score>70?"Excellent":score>40?"Moderate":"Poor"} Conditions
+    </h3>
+
+    <div style="margin-top:15px;opacity:0.8">
+    Confidence: ${confidence}%
+    </div>
+
+    <div style="margin-top:15px;font-size:12px;opacity:0.6">
+    📡 Data Sources: NASA DONKI + NOAA SWPC (Real-time)
+    </div>
+    `;
+
+    document.getElementById("time").innerText=
+        new Date().toLocaleTimeString();
+}
+
+load();
+setInterval(load,60000);
+</script>
+
 </body>
 </html>
