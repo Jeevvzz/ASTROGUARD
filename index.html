@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AstroGuard - Advanced Space Weather Console</title>
+<title>AstroGuard - Space Weather Intelligence System</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -142,6 +143,13 @@ body::after {
     margin-top: 2px;
 }
 
+/* Header Controls */
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
 .time-status {
     display: flex;
     align-items: center;
@@ -161,6 +169,48 @@ body::after {
 @keyframes pulse {
     0%, 100% { opacity: 1; box-shadow: 0 0 6px #10b981; }
     50% { opacity: 0.4; }
+}
+
+.btn-group {
+    display: flex;
+    gap: 8px;
+}
+
+.btn {
+    padding: 10px 18px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.btn-share {
+    background: linear-gradient(135deg, #0A66C2 0%, #0854B5 100%);
+    border: none;
+    box-shadow: 0 4px 12px rgba(10, 102, 194, 0.3);
+}
+
+.btn-share:hover {
+    box-shadow: 0 6px 20px rgba(10, 102, 194, 0.5);
+}
+
+.btn-download {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: none;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-download:hover {
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
 }
 
 /* Alert */
@@ -295,6 +345,39 @@ body::after {
     margin-top: 12px;
 }
 
+/* Instrument Impact */
+.instrument-impact {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.impact-title {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+}
+
+.impact-boxes {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+.impact-box {
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    font-size: 12px;
+    border-left: 3px solid;
+}
+
+.impact-box.high { border-color: #ef4444; }
+.impact-box.medium { border-color: #f59e0b; }
+.impact-box.low { border-color: #10b981; }
+
 /* Chart */
 .chart-card {
     padding: 32px;
@@ -309,6 +392,31 @@ body::after {
 .chart-container {
     position: relative;
     height: 300px;
+}
+
+/* Countdown */
+.countdown-section {
+    text-align: center;
+    padding: 24px;
+    background: rgba(16, 185, 129, 0.1);
+    border-radius: 12px;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    margin-top: 20px;
+}
+
+.countdown-label {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.countdown-value {
+    font-size: 36px;
+    font-weight: 700;
+    color: #10b981;
+    font-family: 'Monaco', 'Courier New', monospace;
 }
 
 /* Prediction Grid */
@@ -367,23 +475,104 @@ body::after {
     margin-top: 10px;
 }
 
-/* Loading Skeleton */
-.skeleton {
-    background: linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.1) 75%);
-    background-size: 200% 100%;
-    animation: loading 1.5s infinite;
-    border-radius: 8px;
-    height: 20px;
+/* Social Share Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
 }
 
-@keyframes loading {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+.modal.active { display: flex; }
+
+.modal-content {
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 500px;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(40px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+.modal-text {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 24px;
+    line-height: 1.6;
+}
+
+.social-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.social-btn {
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.linkedin-btn {
+    background: #0A66C2;
+    color: white;
+}
+
+.linkedin-btn:hover {
+    background: #0854B5;
+    transform: translateY(-2px);
+}
+
+.twitter-btn {
+    background: #1DA1F2;
+    color: white;
+}
+
+.twitter-btn:hover {
+    background: #1a8cd8;
+    transform: translateY(-2px);
+}
+
+.close-btn {
+    float: right;
+    font-size: 28px;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.6);
+    background: none;
+    border: none;
+}
+
+.close-btn:hover {
+    color: rgba(255, 255, 255, 0.9);
 }
 
 @media (max-width: 768px) {
     .main-grid { grid-template-columns: 1fr; }
+    .prediction-grid { grid-template-columns: 1fr; }
     .header { flex-direction: column; gap: 12px; text-align: center; }
+    .header-controls { flex-direction: column; width: 100%; }
+    .btn-group { width: 100%; }
+    .btn { flex: 1; }
 }
 </style>
 </head>
@@ -402,9 +591,32 @@ body::after {
                 <p>SPACE WEATHER INTELLIGENCE</p>
             </div>
         </div>
-        <div class="time-status">
-            <div class="status-dot"></div>
-            <span id="updateTime">Initializing...</span>
+        <div class="header-controls">
+            <div class="time-status">
+                <div class="status-dot"></div>
+                <span id="updateTime">Initializing...</span>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-share" onclick="openShareModal()">📤 Share</button>
+                <button class="btn btn-download" onclick="downloadAsImage()">💾 Download</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div id="shareModal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeShareModal()">&times;</button>
+            <div class="modal-title">Share AstroGuard</div>
+            <div class="modal-text">
+                🛰️ Built AstroGuard: AI Space Weather Intelligence System with real NASA & NOAA data. Real-time solar flare detection, geomagnetic storm alerts, and research window optimization for scientists.
+                <br><br>
+                Try it: astroguard-ivory.vercel.app
+            </div>
+            <div class="social-buttons">
+                <button class="social-btn linkedin-btn" onclick="shareLinkedIn()">Share on LinkedIn</button>
+                <button class="social-btn twitter-btn" onclick="shareTwitter()">Share on Twitter</button>
+            </div>
         </div>
     </div>
 
@@ -413,19 +625,30 @@ body::after {
 
     <!-- Indicators -->
     <div class="indicators-grid" id="indicatorsGrid">
-        <div class="glass indicator-card"><div class="skeleton" style="height: 40px;"></div></div>
-        <div class="glass indicator-card"><div class="skeleton" style="height: 40px;"></div></div>
-        <div class="glass indicator-card"><div class="skeleton" style="height: 40px;"></div></div>
-        <div class="glass indicator-card"><div class="skeleton" style="height: 40px;"></div></div>
+        <div class="glass indicator-card"><div style="height: 40px; background: linear-gradient(90deg, rgba(255,255,255,0.1) 0%, transparent 100%); border-radius: 8px; animation: pulse-load 2s infinite;"></div></div>
+        <div class="glass indicator-card"><div style="height: 40px; background: linear-gradient(90deg, rgba(255,255,255,0.1) 0%, transparent 100%); border-radius: 8px; animation: pulse-load 2s infinite;"></div></div>
+        <div class="glass indicator-card"><div style="height: 40px; background: linear-gradient(90deg, rgba(255,255,255,0.1) 0%, transparent 100%); border-radius: 8px; animation: pulse-load 2s infinite;"></div></div>
+        <div class="glass indicator-card"><div style="height: 40px; background: linear-gradient(90deg, rgba(255,255,255,0.1) 0%, transparent 100%); border-radius: 8px; animation: pulse-load 2s infinite;"></div></div>
     </div>
 
     <!-- Main Content -->
     <div class="main-grid">
         <!-- Score -->
         <div class="glass score-card">
-            <div class="section-title" style="margin-bottom: 20px;">Research Score</div>
-            <div id="scoreDisplay" style="width: 100%;">
-                <div class="skeleton" style="height: 200px; border-radius: 50%; width: 200px; margin: 0 auto 20px;"></div>
+            <div class="chart-title">Research Score</div>
+            <div id="scoreDisplay">
+                <div class="score-circle good">
+                    <div class="score-number">--<span class="score-max">/100</span></div>
+                </div>
+                <div class="score-label">Loading...</div>
+            </div>
+
+            <!-- Instrument Impact -->
+            <div class="instrument-impact">
+                <div class="impact-title">Impact by Instrument</div>
+                <div class="impact-boxes" id="impactBoxes">
+                    <div class="impact-box low">Radio Telescope: Low Risk</div>
+                </div>
             </div>
         </div>
 
@@ -438,22 +661,105 @@ body::after {
         </div>
     </div>
 
-    <!-- Prediction -->
+    <!-- Countdown -->
     <div class="glass" style="padding: 32px;">
+        <div class="chart-title">⏱️ Best Research Window Countdown</div>
+        <div class="countdown-section">
+            <div class="countdown-label">Next Optimal Observation Window</div>
+            <div class="countdown-value" id="countdown">Loading...</div>
+        </div>
+    </div>
+
+    <!-- Prediction -->
+    <div class="glass" style="padding: 32px; margin-top: 24px;">
         <div class="chart-title">🗓️ 3-Day Forecast</div>
         <div class="prediction-grid" id="predictionGrid">
-            <div class="day-forecast"><div class="skeleton" style="height: 100px;"></div></div>
-            <div class="day-forecast"><div class="skeleton" style="height: 100px;"></div></div>
-            <div class="day-forecast"><div class="skeleton" style="height: 100px;"></div></div>
+            <div class="day-forecast"><div style="height: 100px; background: linear-gradient(90deg, rgba(255,255,255,0.1) 0%, transparent 100%); border-radius: 8px;"></div></div>
+            <div class="day-forecast"><div style="height: 100px; background: linear-gradient(90deg, rgba(255,255,255,0.1) 0%, transparent 100%); border-radius: 8px;"></div></div>
+            <div class="day-forecast"><div style="height: 100px; background: linear-gradient(90deg, rgba(255,255,255,0.1) 0%, transparent 100%); border-radius: 8px;"></div></div>
         </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align: center; margin-top: 40px; padding: 20px; color: rgba(255, 255, 255, 0.5); font-size: 12px;">
+        <p>Data Sources: NASA DONKI API | NOAA Space Weather Prediction Center</p>
+        <p style="margin-top: 8px;">Built with ❤️ for space researchers | AstroGuard © 2024</p>
     </div>
 
 </div>
 
+<style>
+@keyframes pulse-load {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.6; }
+}
+</style>
+
 <script>
 let chartInstance = null;
 
-// Safe fetch with proper error handling
+// Instrument impact descriptions
+const instrumentDescriptions = {
+    radio: {
+        status: "High Risk - Radio comms disrupted by Kp storms",
+        severity: "high"
+    },
+    satellite: {
+        status: "Very High Risk - Radiation damage risk during storms",
+        severity: "high"
+    },
+    optical: {
+        status: "Low Risk - Minimal atmospheric effect on observations",
+        severity: "low"
+    },
+    gps: {
+        status: "Critical Risk - Geolocation errors possible with Kp > 5",
+        severity: "high"
+    }
+};
+
+// Share functions
+function openShareModal() {
+    document.getElementById('shareModal').classList.add('active');
+}
+
+function closeShareModal() {
+    document.getElementById('shareModal').classList.remove('active');
+}
+
+function shareLinkedIn() {
+    const text = "🛰️ I built AstroGuard: AI Space Weather Intelligence System\n\nReal-time solar flare detection, geomagnetic storm alerts, and research window optimization for scientists.\n\nBuilt with: NASA APIs + NOAA Data + Claude AI\n\n#SpaceTech #AI #Research";
+    const url = `https://www.linkedin.com/sharing/share-offsite/?url=https://astroguard-ivory.vercel.app`;
+    window.open(url, '_blank');
+    closeShareModal();
+}
+
+function shareTwitter() {
+    const text = "🛰️ Built AstroGuard: AI Space Weather Intelligence System with real NASA & NOAA data. Solar flare detection, geomagnetic storm alerts, research window optimization. Check it out! #SpaceTech #AI #Research";
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=https://astroguard-ivory.vercel.app`;
+    window.open(url, '_blank');
+    closeShareModal();
+}
+
+// Download as image
+async function downloadAsImage() {
+    const element = document.querySelector('.container');
+    try {
+        const canvas = await html2canvas(element, {
+            backgroundColor: '#000',
+            scale: 2
+        });
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL('image/png');
+        link.download = 'AstroGuard-SpaceWeather.png';
+        link.click();
+    } catch (error) {
+        alert('Error downloading image. Please try again.');
+        console.error(error);
+    }
+}
+
+// Safe fetch
 async function fetchData(url) {
     try {
         const response = await fetch(url);
@@ -465,16 +771,7 @@ async function fetchData(url) {
     }
 }
 
-// Parallel fetch all data
-async function loadAllData() {
-    return Promise.all([
-        fetchData('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json'),
-        fetchData('https://services.swpc.noaa.gov/products/solar-wind/plasma-7-day.json'),
-        fetchData('https://api.nasa.gov/DONKI/FLR?api_key=DEMO_KEY')
-    ]);
-}
-
-// Parse Kp Index
+// Parse values
 function getKpValue(data) {
     if (!Array.isArray(data) || data.length < 2) return 3;
     try {
@@ -485,7 +782,6 @@ function getKpValue(data) {
     }
 }
 
-// Parse Solar Wind
 function getWindValue(data) {
     if (!Array.isArray(data) || data.length < 2) return 400;
     try {
@@ -496,7 +792,6 @@ function getWindValue(data) {
     }
 }
 
-// Parse Flares (last 48h)
 function getRecentFlares(data) {
     if (!Array.isArray(data)) return [];
     const cutoff = Date.now() - 48 * 60 * 60 * 1000;
@@ -509,21 +804,18 @@ function getRecentFlares(data) {
     });
 }
 
-// Calculate scientific score
+// Calculate score
 function calculateScore(kp, wind, recentFlares) {
     let score = 100;
     
-    // Kp impact
     if (kp >= 7) score -= 35;
     else if (kp >= 5) score -= 22;
     else if (kp >= 3) score -= 10;
     
-    // Solar wind impact
     if (wind > 700) score -= 25;
     else if (wind > 500) score -= 15;
     else if (wind > 400) score -= 8;
     
-    // Flares impact
     recentFlares.forEach(flare => {
         const type = flare.classType?.[0] || 'B';
         if (type === 'X') score -= 32;
@@ -535,50 +827,59 @@ function calculateScore(kp, wind, recentFlares) {
     return Math.max(0, Math.min(100, Math.round(score)));
 }
 
-// Main load function
+// Calculate countdown
+function getCountdownDays(predictions) {
+    const bestIdx = predictions.reduce((best, curr, idx) => 
+        curr.score > predictions[best].score ? idx : best, 0);
+    
+    if (bestIdx === 0) return "Today! 🎉";
+    if (bestIdx === 1) return "Tomorrow - 24 hours";
+    return `${bestIdx} days away`;
+}
+
+// Main update function
 async function updateDashboard() {
     try {
-        // Update time
         const now = new Date();
         document.getElementById('updateTime').textContent = 
             `Updated: ${now.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}`;
         
-        // Load all data in parallel
-        const [kpData, windData, flareData] = await loadAllData();
+        const [kpData, windData, flareData] = await Promise.all([
+            fetchData('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json'),
+            fetchData('https://services.swpc.noaa.gov/products/solar-wind/plasma-7-day.json'),
+            fetchData('https://api.nasa.gov/DONKI/FLR?api_key=DEMO_KEY')
+        ]);
         
-        // Parse values
         const kp = getKpValue(kpData);
         const wind = getWindValue(windData);
         const recentFlares = getRecentFlares(flareData || []);
-        
-        // Calculate score
         const score = calculateScore(kp, wind, recentFlares);
         
-        // Determine status
+        // Status
         const scoreClass = score >= 70 ? 'good' : score >= 45 ? 'moderate' : 'poor';
         const scoreText = score >= 70 ? 'Excellent' : score >= 45 ? 'Moderate' : 'Poor';
         
-        // Alert message
+        // Alert
         let alertHTML = '';
         if (kp >= 7) {
             alertHTML = `
                 <div class="alert danger">
                     <div class="alert-icon">⚠️</div>
-                    <div class="alert-text">Severe Geomagnetic Storm - Kp${Math.round(kp)}</div>
+                    <div class="alert-text"><strong>Severe Geomagnetic Storm</strong> - Kp${Math.round(kp)} | High interference expected</div>
                 </div>
             `;
         } else if (score >= 80) {
             alertHTML = `
                 <div class="alert success">
                     <div class="alert-icon">✅</div>
-                    <div class="alert-text">Optimal Conditions for Observations</div>
+                    <div class="alert-text"><strong>Optimal Conditions</strong> - Excellent for observations</div>
                 </div>
             `;
         } else if (score < 40) {
             alertHTML = `
                 <div class="alert warning">
                     <div class="alert-icon">⚡</div>
-                    <div class="alert-text">High Interference Risk - Monitor Closely</div>
+                    <div class="alert-text"><strong>High Interference Risk</strong> - Monitor conditions closely</div>
                 </div>
             `;
         }
@@ -587,7 +888,6 @@ async function updateDashboard() {
         // Indicators
         const kpStatus = kp >= 7 ? 'Storm' : kp >= 5 ? 'Active' : kp >= 3 ? 'Unsettled' : 'Quiet';
         const kpColor = kp >= 7 ? '#ef4444' : kp >= 5 ? '#f59e0b' : '#10b981';
-        
         const windStatus = wind > 700 ? 'Extreme' : wind > 500 ? 'High' : wind > 400 ? 'Elevated' : 'Normal';
         const windColor = wind > 700 ? '#ef4444' : wind > 500 ? '#f59e0b' : '#10b981';
         
@@ -614,7 +914,7 @@ async function updateDashboard() {
             </div>
         `;
         
-        // Score display
+        // Score
         document.getElementById('scoreDisplay').innerHTML = `
             <div class="score-circle ${scoreClass}">
                 <div class="score-number">${score}<span class="score-max">/100</span></div>
@@ -622,7 +922,14 @@ async function updateDashboard() {
             <div class="score-label">${scoreText} Conditions</div>
         `;
         
-        // 3-Day Forecast
+        // Instrument impact
+        const impacts = Object.entries(instrumentDescriptions).map(([key, val]) => {
+            const riskClass = val.severity === 'high' ? 'high' : val.severity === 'medium' ? 'medium' : 'low';
+            return `<div class="impact-box ${riskClass}">${val.status}</div>`;
+        }).join('');
+        document.getElementById('impactBoxes').innerHTML = impacts;
+        
+        // Predictions
         const predictions = [];
         for (let i = 0; i <= 2; i++) {
             const futureDate = new Date(Date.now() + i * 24 * 60 * 60 * 1000);
@@ -650,7 +957,10 @@ async function updateDashboard() {
             </div>
         `).join('');
         
-        // 7-Day Chart
+        // Countdown
+        document.getElementById('countdown').textContent = getCountdownDays(predictions);
+        
+        // Chart
         const days = [];
         const scores = [];
         
@@ -658,13 +968,11 @@ async function updateDashboard() {
             const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
             days.push(date.toLocaleDateString('en', {month: 'short', day: 'numeric'}));
             
-            // Simulate daily variation
             const baseScore = score - (i * 2);
             const dailyScore = Math.max(20, Math.min(100, Math.round(baseScore + (Math.random() * 15 - 7))));
             scores.push(dailyScore);
         }
         
-        // Create or update chart
         if (chartInstance) chartInstance.destroy();
         
         const ctx = document.getElementById('trendChart').getContext('2d');
@@ -717,15 +1025,21 @@ async function updateDashboard() {
         });
         
     } catch (error) {
-        console.error('Dashboard update error:', error);
+        console.error('Error:', error);
     }
 }
 
-// Initial load
+// Load and auto-refresh
 updateDashboard();
-
-// Auto-refresh every 60 seconds
 setInterval(updateDashboard, 60000);
+
+// Close modal on outside click
+window.onclick = function(event) {
+    const modal = document.getElementById('shareModal');
+    if (event.target === modal) {
+        modal.classList.remove('active');
+    }
+}
 </script>
 
 </body>
